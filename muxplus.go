@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"github.com/go-playground/form"
 	"net/url"
+	"regexp"
 )
 
 type FuncVal struct {
@@ -53,14 +54,12 @@ func DefaultArgsParseHandler(handler Handler) Handler {
 
 			params := make(url.Values)
 
-			for key, val := range r.Form {
+			for key, val := range req.Form {
 
 				key = regexp.MustCompile(`\[([a-z_]*)\]`).ReplaceAllString(key, `.${1}`)
 
 				params[key] = val
 			}
-
-
 
 			if err = form.NewDecoder().Decode(opts, params); err != nil {
 
