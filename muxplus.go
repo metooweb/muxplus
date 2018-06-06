@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"github.com/go-playground/form"
+	"net/url"
 )
 
 type FuncVal struct {
@@ -50,7 +51,18 @@ func DefaultArgsParseHandler(handler Handler) Handler {
 
 			opts := reflect.New(fv.Func.In[1].Elem()).Interface()
 
-			if err = form.NewDecoder().Decode(opts, req.Form); err != nil {
+			params := make(url.Values)
+
+			for key, val := range r.Form {
+
+				key = regexp.MustCompile(`\[([a-z_]*)\]`).ReplaceAllString(key, `.${1}`)
+
+				params[key] = val
+			}
+
+
+
+			if err = form.NewDecoder().Decode(opts, params); err != nil {
 
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
