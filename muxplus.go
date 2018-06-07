@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"reflect"
 	"github.com/go-playground/form"
-	"net/url"
-	"regexp"
+	"encoding/json"
+	"io/ioutil"
 )
 
 type FuncVal struct {
@@ -48,26 +48,40 @@ func DefaultArgsParseHandler(handler Handler) Handler {
 
 		fv.Args = append(fv.Args, reflect.ValueOf(ctx))
 
+		opts := reflect.New(fv.Func.In[1].Elem()).Interface()
+
 		if len(fv.Func.In) > 1 {
 
-			opts := reflect.New(fv.Func.In[1].Elem()).Interface()
+			contentType := req.Header.Get("Content-Type")
 
-			params := make(url.Values)
+			switch contentType {
 
-			for key, val := range req.Form {
+			case "application/json":
 
-				key = regexp.MustCompile(`\[([a-z_]*)\]`).ReplaceAllString(key, `.${1}`)
+				var bytes []byte
 
-				params[key] = val
+				defer req.Body.Close()
+
+				if bytes, err = ioutil.ReadAll(req.Body); err != nil {
+					break
+				}
+
+				err = json.Unmarshal(bytes, opts)
+
+			default:
+
+				err = form.NewDecoder().Decode(opts, req.Form)
+
 			}
 
-			if err = form.NewDecoder().Decode(opts, params); err != nil {
+			if err != nil {
 
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
 			fv.Args = append(fv.Args, reflect.ValueOf(opts))
+
 		}
 
 		handler.Deal(w, req, fv)
