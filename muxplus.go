@@ -48,9 +48,9 @@ func DefaultArgsParseHandler(handler Handler) Handler {
 
 		fv.Args = append(fv.Args, reflect.ValueOf(ctx))
 
-		opts := reflect.New(fv.Func.In[1].Elem()).Interface()
-
 		if len(fv.Func.In) > 1 {
+
+			opts := reflect.New(fv.Func.In[1].Elem()).Interface()
 
 			contentType := req.Header.Get("Content-Type")
 
