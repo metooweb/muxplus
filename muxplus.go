@@ -7,6 +7,8 @@ import (
 	"github.com/go-playground/form"
 	"encoding/json"
 	"io/ioutil"
+	"fmt"
+	"strings"
 )
 
 type FuncVal struct {
@@ -54,21 +56,19 @@ func DefaultArgsParseHandler(handler Handler) Handler {
 
 			contentType := req.Header.Get("Content-Type")
 
-			switch contentType {
-
-			case "application/json":
+			if strings.Contains(contentType, "application/json") {
 
 				var bytes []byte
 
 				defer req.Body.Close()
 
-				if bytes, err = ioutil.ReadAll(req.Body); err != nil {
-					break
+				if bytes, err = ioutil.ReadAll(req.Body); err == nil {
+
+					fmt.Println("=====================", string(bytes))
+
+					err = json.Unmarshal(bytes, opts)
 				}
-
-				err = json.Unmarshal(bytes, opts)
-
-			default:
+			} else {
 
 				err = form.NewDecoder().Decode(opts, req.Form)
 
